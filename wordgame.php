@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// Kelimeler
 $words = [
 
     "php",
@@ -33,36 +34,59 @@ $words = [
     "teknoloji"
 
 ];
+
+// Yeni kelime oluştur
 if (!isset($_SESSION['word'])) {
+
     $_SESSION['word'] = $words[array_rand($words)];
 }
 
+// Harfleri karıştır
+$mixed = str_shuffle($_SESSION['word']);
+
 $message = "";
 
+// Tahmin kontrol
 if (isset($_POST['guess'])) {
 
-    $guess = strtolower($_POST['guess']);
+    $guess = strtolower(trim($_POST['guess']));
 
     if ($guess == $_SESSION['word']) {
 
-        $message = "🎉 Doğru!";
+        $message = "🎉 Doğru tahmin!";
 
+        // Skor ekle
         mysqli_query($conn,
         "UPDATE users 
-        SET kelime_skor = kelime_skor + 10 
+        SET kelime_skor = kelime_skor + 10
         WHERE id=$user_id"
         );
 
-        unset($_SESSION['word']);
+        // Yeni kelime
+        $_SESSION['word'] = $words[array_rand($words)];
+
+        // Yeni karışık kelime
+        $mixed = str_shuffle($_SESSION['word']);
 
     } else {
-        $message = "❌ Yanlış!";
+
+        $message = "❌ Yanlış tahmin!";
     }
+}
+
+// Sıfırla
+if (isset($_POST['reset'])) {
+
+    $_SESSION['word'] = $words[array_rand($words)];
+
+    $mixed = str_shuffle($_SESSION['word']);
+
+    $message = "🔄 Yeni kelime oluşturuldu!";
 }
 ?>
 
-<html>
-
+<!DOCTYPE html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <title>Kelime Oyunu</title>
@@ -84,6 +108,15 @@ if (isset($_POST['guess'])) {
             box-shadow:0 4px 10px rgba(0,0,0,0.1);
         }
 
+        .mixed-word{
+            font-size:35px;
+            letter-spacing:5px;
+            font-weight:bold;
+            color:#0d6efd;
+            text-align:center;
+            margin-top:20px;
+        }
+
     </style>
 </head>
 <body>
@@ -97,24 +130,29 @@ if (isset($_POST['guess'])) {
         </h2>
 
         <p class="text-center">
-            Gizli kelimeyi tahmin et.
+            Karışık harflerden doğru kelimeyi bul!
         </p>
+
+        <!-- Karışık Kelime -->
+        <div class="mixed-word">
+            <?php echo $mixed; ?>
+        </div>
 
         <?php if($message != ""): ?>
 
-            <div class="alert alert-info mt-3">
+            <div class="alert alert-info mt-4">
                 <?php echo $message; ?>
             </div>
 
         <?php endif; ?>
 
-        <form method="POST" class="mt-3">
+        <form method="POST" class="mt-4">
 
             <input 
                 type="text"
                 name="guess"
                 class="form-control"
-                placeholder="Kelime gir..."
+                placeholder="Tahminini yaz..."
                 required
             >
 
@@ -146,5 +184,4 @@ if (isset($_POST['guess'])) {
 </div>
 
 </body>
-
 </html>
